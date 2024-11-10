@@ -1,5 +1,6 @@
 package com.venkatesh.leaderboard.controller;
 
+import com.venkatesh.leaderboard.exception.UserNotFoundException;
 import com.venkatesh.leaderboard.model.User;
 import com.venkatesh.leaderboard.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class UserController {
     public ResponseEntity<User> getUserById(@PathVariable String userId) {
         return userService.getUserById(userId)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found"));
     }
 
     @PostMapping

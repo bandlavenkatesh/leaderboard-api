@@ -1,5 +1,6 @@
 package com.venkatesh.leaderboard.service;
 
+import com.venkatesh.leaderboard.exception.UserNotFoundException;
 import com.venkatesh.leaderboard.model.User;
 import com.venkatesh.leaderboard.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,17 +33,17 @@ public class UserService {
     }
 
     public User updateUserScore(String userId, int newScore) {
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setScore(newScore);
-            return userRepository.save(user);
-        } else {
-            throw new RuntimeException("User not found");
-        }
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new UserNotFoundException("User with ID " + userId + " not found"));
+    user.setScore(newScore);
+    // Assign badges based on newScore (optional, based on requirements)
+    return userRepository.save(user);
     }
 
     public void deleteUserById(String userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException("User with ID " + userId + " not found");
+        }
         userRepository.deleteById(userId);
     }
 }

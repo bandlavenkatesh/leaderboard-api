@@ -20,6 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+
+
 @WebMvcTest(UserController.class)
 public class UserControllerTest {
 
@@ -88,13 +91,14 @@ public class UserControllerTest {
         Mockito.when(userService.updateUserScore("user123", 45)).thenReturn(updatedUser);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/users/user123")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("45"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId", is("user123")))
-                .andExpect(jsonPath("$.score", is(45)))
-                .andExpect(jsonPath("$.badges", hasItem("Code Ninja")));
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("45"))  // Adjust JSON structure as per your method's requirements
+        .andDo(print())
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.userId", is("user123")))
+        .andExpect(jsonPath("$.score", is(45)))
+        .andExpect(jsonPath("$.badges", hasItem("Code Ninja")));  // Verify badges if assigned based on score
+
     }
 
     // Test DELETE /users/{userId} - Delete a user by ID
@@ -107,4 +111,36 @@ public class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }
+    @Test
+    public void testGetUserById_UserExists() throws Exception {
+        // Arrange
+        String userId = "user123";
+        User user = new User(userId, "john_doe", 50, Set.of("Code Master"));
+        Mockito.when(userService.getUserById(userId)).thenReturn(Optional.of(user));
+    
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/{userId}", userId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(userId))
+                .andExpect(jsonPath("$.username").value("john_doe"))
+                .andExpect(jsonPath("$.score").value(50))
+                .andExpect(jsonPath("$.badges", hasItem("Code Master")));
+    }
+    
+    @Test
+    public void testGetUserById_UserNotFound() throws Exception {
+        // Arrange
+        String nonExistentUserId = "nonExistentUser";
+        Mockito.when(userService.getUserById(nonExistentUserId)).thenReturn(Optional.empty());
+    
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.get("/users/{userId}", nonExistentUserId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("User with ID " + nonExistentUserId + " not found"));
+    }
+    
+    
+    
 }
